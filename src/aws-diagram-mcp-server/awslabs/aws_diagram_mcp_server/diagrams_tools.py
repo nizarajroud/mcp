@@ -108,6 +108,7 @@ async def generate_diagram(
     try:
         # Create a namespace for execution
         namespace = {}
+        original_cwd = os.getcwd()
 
         # Import necessary modules directly in the namespace
         # nosec B102 - These exec calls are necessary to import modules in the namespace
@@ -116,6 +117,10 @@ async def generate_diagram(
             'import os',
             namespace,
         )
+        
+        # Set workspace directory in namespace for Custom resource resolution
+        if workspace_dir and os.path.isdir(workspace_dir):
+            os.chdir(workspace_dir)
         # nosec B102 - These exec calls are necessary to import modules in the namespace
         exec(  # nosem: python.lang.security.audit.exec-detected.exec-detected
             'import diagrams', namespace
@@ -310,6 +315,9 @@ from diagrams.aws.enduser import *
 
         # Cancel the alarm
         signal.alarm(0)
+        
+        # Restore original working directory
+        os.chdir(original_cwd)
 
         # Check if the file was created
         png_path = f'{output_path}.png'
@@ -327,8 +335,10 @@ from diagrams.aws.enduser import *
                 message='Diagram file was not created. Check your code for errors.',
             )
     except TimeoutError as e:
+        os.chdir(original_cwd)
         return DiagramGenerateResponse(status='error', message=str(e))
     except Exception as e:
+        os.chdir(original_cwd)
         # More detailed error logging
         error_type = type(e).__name__
         error_message = str(e)
