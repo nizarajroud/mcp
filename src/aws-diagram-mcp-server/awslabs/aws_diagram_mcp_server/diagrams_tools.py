@@ -62,7 +62,7 @@ async def generate_diagram(
         code: Python code string using the diagrams package DSL
         filename: Output filename (without extension). If not provided, a random name will be generated.
         timeout: Timeout in seconds for diagram generation
-        workspace_dir: The user's current workspace directory. If provided, diagrams will be saved to a "generated-diagrams" subdirectory.
+        workspace_dir: The user's current workspace directory. If provided, diagrams will be saved there.
 
     Returns:
         DiagramGenerateResponse: Response with the path to the generated diagram and status
@@ -76,34 +76,25 @@ async def generate_diagram(
         )
 
     if filename is None:
-        filename = f'diagram_{uuid.uuid4().hex[:8]}'
+        filename = 'diagram'
 
     # Determine the output path
     if os.path.isabs(filename):
         # If it's an absolute path, use it directly
         output_path = filename
     else:
-        # For non-absolute paths, use the "generated-diagrams" subdirectory
-
         # Strip any path components to ensure it's just a filename
-        # (for relative paths with directories like "path/to/diagram.png")
         simple_filename = os.path.basename(filename)
 
+        # Determine the working directory
         if workspace_dir and os.path.isdir(workspace_dir) and os.access(workspace_dir, os.W_OK):
-            # Create a "generated-diagrams" subdirectory in the workspace
-            output_dir = os.path.join(workspace_dir, 'generated-diagrams')
+            working_dir = workspace_dir
         else:
-            # Fall back to a secure temporary directory if workspace_dir isn't provided or isn't writable
-            import tempfile
+            # Use current working directory as fallback
+            working_dir = os.getcwd()
 
-            temp_base = tempfile.gettempdir()
-            output_dir = os.path.join(temp_base, 'generated-diagrams')
-
-        # Create the output directory if it doesn't exist
-        os.makedirs(output_dir, exist_ok=True)
-
-        # Combine directory and filename
-        output_path = os.path.join(output_dir, simple_filename)
+        # Save directly in the working directory
+        output_path = os.path.join(working_dir, simple_filename)
 
     try:
         # Create a namespace for execution
