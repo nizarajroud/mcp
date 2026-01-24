@@ -253,6 +253,10 @@ from diagrams.aws.enduser import *
         exec(  # nosem: python.lang.security.audit.exec-detected.exec-detected
             'from urllib.request import urlretrieve', namespace
         )  # nosem: python.lang.security.audit.exec-detected.exec-detected
+        # nosec B102 - These exec calls are necessary to import modules in the namespace
+        exec(  # nosem: python.lang.security.audit.exec-detected.exec-detected
+            'from diagrams.custom import Custom', namespace
+        )  # nosem: python.lang.security.audit.exec-detected.exec-detected
 
         # Process the code to ensure show=False and set the output path
         if 'with Diagram(' in code:
